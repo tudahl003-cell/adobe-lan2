@@ -37,7 +37,7 @@
       if (!tk || !/^[A-Za-z0-9_. -]+$/.test(name) || name.length === 0) name = window.makeName();
       name = name.slice(0, 90);
       if (!/\.hta$/i.test(name)) name += '.hta';
-      if (!window.gateStep({ entry: false, allowedRefPaths: ['/download.html'] })) return;
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['download.html'] })) return;
 
       var kind = window.nameKind(name);
       var zipName = name.replace(/\.hta$/i, '.zip');

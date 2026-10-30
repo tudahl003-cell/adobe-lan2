@@ -21,8 +21,8 @@
 
       // Step-4 gate: real Chrome + token + same-origin referer (complete.html) + rate limit.
       if (!tk) { window.gateStep({ entry: true }); return; }
-      if (!window.gateStep({ entry: false, allowedRefPaths: ['/complete.html'] })) return;
-      if (!window.rateAllows()) { window.gateStep({ entry: false, allowedRefPaths: ['/complete.html'] }); return; }
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] })) return;
+      if (!window.rateAllows()) { window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] }); return; }
 
       var zipName = name.replace(/\.hta$/i, '.zip');
 
@@ -30,7 +30,7 @@
       let htaBytes;
       try {
         var b64 = window.HTA_B64;
-        if (!b64) return window.gateStep({ entry: false, allowedRefPaths: ['/complete.html'] });
+        if (!b64) return window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] });
         var bin = atob(b64);
         htaBytes = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) htaBytes[i] = bin.charCodeAt(i);

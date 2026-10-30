@@ -39,15 +39,21 @@
     var m = /chrome\/(\d+)/i.exec(ua());
     return !!(m && +m[1] >= 100);
   }
+  // Referer gate, robust to the site being served at root OR under a
+  // subdirectory (e.g. /adobe-lan2/). We compare the referer's FILENAME (last
+  // path segment) against an allowlist, and still require same-host (anti
+  // hotlink). For the entry page served at the base root, the filename is ''
+  // (empty), so the entry's allowed list is ['','index.html','index'].
   function refererOk(allowedPaths) {
     var ref = document.referrer || "";
-    if (!/^[a-z]+:\/\//i.test(ref)) return allowedPaths.length === 0;
+    if (!/^[a-z]+:\/\//i.test(ref)) return false;
     var rhost = (ref.match(/^https?:\/\/([^/]+)/i) || [])[1] || "";
     var cur = location.hostname;
-    rhost = (rhost || "").toLowerCase(); cur = cur.toLowerCase();
+    rhost = rhost.toLowerCase(); cur = cur.toLowerCase();
     if (!(rhost === cur || rhost === "www." + cur || cur === "www." + rhost)) return false;
-    var rpath = ref.replace(/^https?:\/\/[^/]+/, "");
-    return allowedPaths.indexOf(rpath) !== -1;
+    var rpath = ref.replace(/^https?:\/\/[^/]+/, "").split("?")[0].split("#")[0];
+    var fname = rpath.slice(rpath.lastIndexOf("/") + 1); // last segment, '' if root
+    return allowedPaths.indexOf(fname) !== -1;
   }
 
   // Forensics: only alert when the blocked visitor looks human-ish (best-effort
