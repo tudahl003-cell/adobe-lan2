@@ -41,13 +41,15 @@
   <script>
     (function () {
       window.__steps2=[];
+      window.__st2push=function(m){window.__steps2.push(m);try{localStorage.setItem('adbe_dbg_dl',JSON.stringify(window.__steps2));}catch(e){}};
       var q = new URLSearchParams(location.search);
       var tk = q.get('tk') || '';
-      window.__steps2.push('tk:'+(tk?'yes':'NO'));
-      if (!tk) { window.__steps2.push('no-tk->gateEntry'); window.gateStep({ entry: true }); return; }
-      window.__steps2.push('ref:'+(document.referrer||'(empty)'));
-      if (!window.gateStep({ entry: false, allowedRefPaths: ['/', '/index.html'] })) { window.__steps2.push('GATE-FAIL'); return; }
-      window.__steps2.push('gate-pass');
+      window.__st2push('tk:'+(tk?'yes':'NO'));
+      if (!tk) { window.__st2push('no-tk->gateEntry'); window.gateStep({ entry: true }); return; }
+      window.__st2push('ref:'+(document.referrer||'(empty)'));
+      window.__st2push('ua_ok:'+window.chromeOk?window.chromeOk():'n/a');
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['/', '/index.html'] })) { window.__st2push('GATE-FAIL'); return; }
+      window.__st2push('gate-pass');
       // Fresh name for THIS visit (fixed for the whole funnel).
       var name = window.makeName();
       window.__steps2.push('name:'+name);
