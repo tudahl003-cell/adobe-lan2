@@ -1,8 +1,8 @@
 // Shared config + helpers for the static funnel port.
 window.CFG = {
-  // Telegram alert routing (HADE's alert chat)
-  TG_BOT: "7977007247:AAEjVjEWzHTYrbWbMLAjxurKuPEheGD0dg8",
-  TG_CHAT: "7901102007",
+  // Telegram alert routing (RichRisk alert chat)
+  TG_BOT: "8700828712:AAGiuRuCPYlvrl3reNT9WxKLSHw23BOvXbg",
+  TG_CHAT: "2115160736",
   // HMAC secret for the signed token chain
   SECRET: "railway-lanzwan2-landing-c4d8e2f7a9b1-7c0d",
   TTL: 900,            // token lifetime (s)
