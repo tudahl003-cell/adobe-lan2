@@ -7,9 +7,9 @@
 //   * honeypot poison (localStorage, 24h)        (poison_hit)
 // Anything else degrades the same way the original did: a styled 404.
 (function () {
-  var POISON_KEY = "adbe_poisoned_at";
-  var RATE_KEY   = "adbe_dl_rate";        // {ts:[...]} for per-IP(=per-client) rate limit
-  var FORE_KEY   = "adbe_fore_last";
+  var POISON_KEY = "lf_poisoned_at";
+  var RATE_KEY   = "lf_dl_rate";        // {ts:[...]} for per-IP(=per-client) rate limit
+  var FORE_KEY   = "lf_fore_last";
 
   function isPoisoned() {
     try { var t = +localStorage.getItem(POISON_KEY) || 0; return t && (Date.now() - t) < 86400000; }

